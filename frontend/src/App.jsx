@@ -1,19 +1,36 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
+import { setAuthToken } from "./libs/apiCalls";
 import Accounts from "./pages/accounts";
 import Dashboard from "./pages/dashboard";
 import Login from "./pages/login";
 import Register from "./pages/register";
 import Settings from "./pages/settings";
 import Transactions from "./pages/transactions";
+import useStore from "./store";
+import Navbar from "./componenets/navbar";
 
 const RootLayout = () => {
-  const user = null;
-  return !user ? <Navigate to="/login" replace={true} /> : <Outlet />;
+  const user = useStore((state) => state.user);
+  if (user) {
+    setAuthToken(user.token);
+  }
+
+  return !user ? (
+    <Navigate to="/login" replace={true} />
+  ) : (
+    <>
+      <Navbar />
+      <div className="min-h-[cal(h-screen-100px)] ">
+        <Outlet />
+      </div>
+    </>
+  );
 };
 
 const App = () => {
-  const theme = "light";
+  const theme = useStore((state) => state.theme);
 
   useEffect(() => {
     if (theme === "dark") {
@@ -41,6 +58,7 @@ const App = () => {
           <Route path="/register" element={<Register />} />
         </Routes>
       </div>
+      <Toaster richColors position="top-center" />
     </main>
   );
 };

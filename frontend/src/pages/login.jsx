@@ -1,18 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 import TextInput from "../componenets/textFiled";
 import { useForm } from "react-hook-form";
 import Button from "../componenets/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../libs/apiCalls";
+import { toast } from "sonner";
+import Loading from "../componenets/loading";
+import useStore from "../store";
 
 const Login = () => {
+  const { user, setCredentials } = useStore((state) => state);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const handleOnSubmit = (data) => {
-    console.log(data);
+  const handleOnSubmit = async (data) => {
+    try {
+      setLoading(true);
+      const response = await api.post("/auth/login", data);
+
+      if (response?.data?.status === "success") {
+        const user = { ...response.data.user, token: response.data.token };
+
+        localStorage.setItem("user", JSON.stringify(user));
+
+        setCredentials(user);
+        toast.success("Login successful.");
+        navigate("/");
+      } else {
+        toast.error("Something went wrong. Try again.");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -40,18 +68,24 @@ const Login = () => {
             register={register("password", { required: "Email is required" })}
             error={errors.password && errors.password.message}
           />
-          <Button
-            label="Login"
-            type="submit"
-            className="bg-violet-800 w-full text-white"
-          />
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              <Button
+                label="Login"
+                type="submit"
+                className="bg-violet-800 w-full text-white"
+              />
 
-          <p className="text-sm text-gray-600 text-center">
-            Don't have an account?{" "}
-            <Link to="/register" className=" text-violet-800">
-              Register
-            </Link>
-          </p>
+              <p className="text-sm text-gray-600 text-center">
+                Don't have an account?{" "}
+                <Link to="/register" className=" text-violet-800">
+                  Register
+                </Link>
+              </p>
+            </>
+          )}
         </form>
       </div>
     </div>

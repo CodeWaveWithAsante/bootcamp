@@ -1,18 +1,39 @@
-import React from "react";
-import TextInput from "../componenets/textFiled";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../componenets/button";
-import { Link } from "react-router-dom";
+import TextInput from "../componenets/textFiled";
+import { toast } from "sonner";
+import api from "../libs/apiCalls";
+import Loading from "../componenets/loading";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const handleOnSubmit = (data) => {
-    console.log(data);
+  const handleOnSubmit = async (data) => {
+    try {
+      setLoading(true);
+      const response = await api.post("/auth/register", data);
+
+      if (response?.data?.status === "success") {
+        toast.success("Registration successful. You can now login.");
+        navigate("/login");
+      } else {
+        toast.error("Something went wrong. Try again.");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,20 +68,25 @@ const Register = () => {
             register={register("password", { required: "Email is required" })}
             error={errors.password && errors.password.message}
           />
-          <Button
-            label="Create Account"
-            type="submit"
-            className="bg-violet-800 w-full text-white"
-          />
-
-          <div className="mt-2">
-            <p className="text-sm text-gray-600 text-center">
-              Have an account already?{" "}
-              <Link to="/login" className="text-violet-800">
-                Login
-              </Link>
-            </p>
-          </div>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              <Button
+                label="Create Account"
+                type="submit"
+                className="bg-violet-800 w-full text-white"
+              />
+              <div className="mt-2">
+                <p className="text-sm text-gray-600 text-center">
+                  Have an account already?{" "}
+                  <Link to="/login" className="text-violet-800">
+                    Login
+                  </Link>
+                </p>
+              </div>
+            </>
+          )}
         </form>
       </div>
     </div>
